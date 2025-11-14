@@ -3,12 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class CropManager : MonoBehaviour
+public class CropManager : SingletonMonoBehaviour<CropManager>
 {
 
     [Header("References")]
     [SerializeField] 
     private Tilemap farmingTilemap;
+
+    [SerializeField]
+    private GameObject harvestReadyEffectPrefab;
+
+    public GameObject HarvestReadyEffectPrefab => harvestReadyEffectPrefab;
 
     [Header("Crop Data")]
     private CropBlock[,] cropGrid;
