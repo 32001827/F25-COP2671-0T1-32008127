@@ -10,17 +10,23 @@ public class FarmingController : MonoBehaviour
     [SerializeField]
     private Tilemap farmingTilemap;
 
-    [Header("Testing")]
-    [Tooltip("A seed packet to test planting")]
-    public SeedPacket testSeedPacket;
-
     private CropBlock selectedBlock;
     private Vector2Int playerGridLocation;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private void OnEnable()
     {
-        
+        ToolBarController.OnHoeToolUsed += HandleHoeTool;
+        ToolBarController.OnWaterToolUsed += HandleWaterTool;
+        ToolBarController.OnPlantToolUsed += HandlePlantTool;
+        ToolBarController.OnHarvestToolUsed += HandleHarvestTool;
+    }
+
+    private void OnDisable()
+    {
+        ToolBarController.OnHoeToolUsed -= HandleHoeTool;
+        ToolBarController.OnWaterToolUsed -= HandleWaterTool;
+        ToolBarController.OnPlantToolUsed -= HandlePlantTool;
+        ToolBarController.OnHarvestToolUsed -= HandleHarvestTool;
     }
 
     // Update is called once per frame
@@ -30,35 +36,36 @@ public class FarmingController : MonoBehaviour
         playerGridLocation = (Vector2Int)playerCell;
 
         selectedBlock = cropManager.GetBlockAt(playerGridLocation);
-
-        HandleFarmingInput();
     }
-
-    private void HandleFarmingInput()
+    private void HandleHoeTool()
     {
+        if (selectedBlock == null) return;
+        selectedBlock.TillSoil(); 
+    }
 
-        if (selectedBlock == null)
-        {
-            return;
-        }
+    private void HandleWaterTool()
+    {
+        if (selectedBlock == null) return;
+        selectedBlock.WaterSoil(); 
+    }
 
-        if (Input.GetKeyDown(KeyCode.T))
+    private void HandlePlantTool()
+    {
+        if (selectedBlock == null) return;
+
+        SeedPacket seed = ToolBarController.activeSeedPacket; 
+        if (seed != null)
         {
-            selectedBlock.TillSoil();
-        }
-        if (Input.GetKeyDown(KeyCode.W))
-        {
-            selectedBlock.WaterSoil();
-        }
-        if (Input.GetKeyDown(KeyCode.P))
-        {
-            selectedBlock.PlantSeed(testSeedPacket);
-            cropManager.AddToPlantedCrops(selectedBlock);
-        }
-        if (Input.GetKeyDown(KeyCode.H))
-        {
-            selectedBlock.HarvestPlants();
-            cropManager.RemoveFromPlantedCrops(selectedBlock);
+            selectedBlock.PlantSeed(seed); 
+            cropManager.AddToPlantedCrops(selectedBlock); 
         }
     }
+
+    private void HandleHarvestTool()
+    {
+        if (selectedBlock == null) return;
+        selectedBlock.HarvestPlants(); 
+        cropManager.RemoveFromPlantedCrops(selectedBlock); 
+    }
+
 }

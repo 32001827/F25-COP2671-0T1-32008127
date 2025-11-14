@@ -18,7 +18,7 @@ public class CropManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        if (farmingTilemap == null)
+        if (farmingTilemap != null)
         {
             CreateGridUsingTilemap(farmingTilemap);
         }
