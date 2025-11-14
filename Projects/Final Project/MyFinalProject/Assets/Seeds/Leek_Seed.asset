@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6305bd22eb9fec644b38ef87bd0df93a, type: 3}
+  m_Name: Leek_Seed
+  m_EditorClassIdentifier: 
+  cropName: Leek
+  icon: {fileID: 5682712372081746313, guid: 3c0fd9e79fa04564cb25b27e59aceaac, type: 3}
+  growthSprites:
+  - {fileID: -459716627436792591, guid: 3c0fd9e79fa04564cb25b27e59aceaac, type: 3}
+  - {fileID: -8675129846650585020, guid: 3c0fd9e79fa04564cb25b27e59aceaac, type: 3}
+  - {fileID: 5042105624026617804, guid: 3c0fd9e79fa04564cb25b27e59aceaac, type: 3}
+  - {fileID: 5349869915956102173, guid: 3c0fd9e79fa04564cb25b27e59aceaac, type: 3}
+  growthTimeInMinutes: 30
+  harvestablePrefab: {fileID: 0}

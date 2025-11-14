@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6305bd22eb9fec644b38ef87bd0df93a, type: 3}
+  m_Name: Onion_Seed
+  m_EditorClassIdentifier: 
+  cropName: Onion
+  icon: {fileID: 7787480648833610346, guid: 3c0fd9e79fa04564cb25b27e59aceaac, type: 3}
+  growthSprites:
+  - {fileID: -2158640072130186433, guid: 3c0fd9e79fa04564cb25b27e59aceaac, type: 3}
+  - {fileID: 4424967949123141699, guid: 3c0fd9e79fa04564cb25b27e59aceaac, type: 3}
+  - {fileID: 3893527236686022565, guid: 3c0fd9e79fa04564cb25b27e59aceaac, type: 3}
+  - {fileID: -4707313404745739159, guid: 3c0fd9e79fa04564cb25b27e59aceaac, type: 3}
+  growthTimeInMinutes: 60
+  harvestablePrefab: {fileID: 0}
