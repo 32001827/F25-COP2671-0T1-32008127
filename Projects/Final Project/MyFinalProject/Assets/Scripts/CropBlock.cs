@@ -30,6 +30,11 @@ public class CropBlock
         seedPacket = null;
     }
 
+    public bool CanPlant()
+    {
+        return isTilled && isWatered;
+    }
+
     public void TillSoil()
     {
         isTilled = true;
@@ -45,7 +50,7 @@ public class CropBlock
 
     public void PlantSeed(SeedPacket seed)
     {
-        if (!isTilled && !isWatered)
+        if (!CanPlant())
         {
             Debug.LogWarning("Soil must be tilled before planting seeds.");
             return;
