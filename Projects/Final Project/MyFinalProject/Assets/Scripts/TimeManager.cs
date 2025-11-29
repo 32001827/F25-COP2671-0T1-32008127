@@ -3,70 +3,69 @@ using System;
 
 public class TimeManager : MonoBehaviour
 {
-    // how many real-world seconds equate to a game minute
+    [Tooltip("How many real-world seconds equate to one in-game minute")]
     [SerializeField]
     private float secondsPerGameMinute = 0.5f;
 
-    // current time declaration
     private float currentGameTimeInMinutes = 0f;
 
-    // current time properties
-    public int CurrentDay {  get; private set; }
+    public int CurrentDay { get; private set; }
     public int CurrentHour { get; private set; }
     public int CurrentMinute { get; private set; }
 
-    // Public events
+    /// <summary>
+    /// Fires every time a new in-game hour passes.
+    /// </summary>
     public static event Action<int> OnGameHourPassed;
+
+    /// <summary>
+    /// Fires every time a new in-game day passes.
+    /// </summary>
     public static event Action<int> OnGameDayPassed;
 
-    // Time tracking vars
+    /// <summary>
+    /// Fires every time a new in-game minute passes.
+    /// </summary>
+    public static event Action<int> OnGameMinutePassed;
+
     private int lastHour = -1;
     private int lastDay = -1;
+    private int lastMinute = -1;
 
-    // 1440 minutes in a 24 hour day
-    private const float MINUTES_IN_DAY = 1440f;
+    private const float kMinutesInDay = 1440f;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
     void Update()
     {
-        // advance the time
-        float minutesToAdd = (Time.deltaTime / secondsPerGameMinute) * 1f;
+        float minutesToAdd = (Time.deltaTime / secondsPerGameMinute);
         currentGameTimeInMinutes += minutesToAdd;
 
-        // check for rollover
-        if (currentGameTimeInMinutes >= MINUTES_IN_DAY)
+        CurrentMinute = Mathf.FloorToInt(currentGameTimeInMinutes % 60);
+
+        if (lastMinute != CurrentMinute)
         {
-            // reset clock, advance day
-            currentGameTimeInMinutes -= MINUTES_IN_DAY;
-            CurrentDay++;
+            lastMinute = CurrentMinute;
+            OnGameMinutePassed?.Invoke(CurrentMinute);
         }
 
-        // calculate current hour/minute
+        if (currentGameTimeInMinutes >= kMinutesInDay)
+        {
+            currentGameTimeInMinutes -= kMinutesInDay;
+            CurrentDay++;
+
+            if (lastDay != CurrentDay)
+            {
+                lastDay = CurrentDay;
+                OnGameDayPassed?.Invoke(CurrentDay);
+            }
+        }
+
         CurrentHour = Mathf.FloorToInt(currentGameTimeInMinutes / 60f);
         CurrentMinute = Mathf.FloorToInt(currentGameTimeInMinutes % 60);
 
-        // check for new hour
         if (lastHour != CurrentHour)
         {
             lastHour = CurrentHour;
-
-            // fire event
             OnGameHourPassed?.Invoke(CurrentHour);
-        }
-
-        // check for new day
-        if (lastDay != CurrentDay)
-        {
-            lastDay = CurrentDay;
-
-            // fire event
-            OnGameDayPassed?.Invoke(lastDay);
         }
     }
 }

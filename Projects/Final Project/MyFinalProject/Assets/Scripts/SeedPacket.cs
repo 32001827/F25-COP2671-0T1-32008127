@@ -4,14 +4,21 @@ using UnityEngine;
 public class SeedPacket : ScriptableObject
 {
     [Header("Seed Packet Info")]
-    public string cropName;
-    public Sprite icon;
+    [SerializeField] private string cropName;
+    [SerializeField] private Sprite icon;
 
     [Header("Crop Growth")]
-    public Sprite[] growthSprites;
+    [SerializeField] private Sprite[] growthSprites;
+    [SerializeField]
     [Tooltip("Total time (in game minutes) for the crop to fully grow.")]
-    public int growthTimeInMinutes;
+    private int growthTimeInMinutes;
 
     [Header("Harvest")]
-    public Harvestable harvestablePrefab;
+    [SerializeField] private ItemData itemYield;
+
+    public string CropName => cropName;
+    public Sprite Icon => icon;
+    public Sprite[] GrowthSprites => growthSprites;
+    public int GrowthTimeInMinutes => growthTimeInMinutes;
+    public ItemData ItemYield => itemYield;
 }

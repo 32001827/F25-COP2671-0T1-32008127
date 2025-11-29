@@ -2,32 +2,20 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    public Transform target; // player
-    public Vector3 offset; // just in case
+    [Tooltip("The transform the camera should follow (e.g., the player).")]
+    [SerializeField] private Transform target;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    [Tooltip("The offset from the target's position.")]
+    [SerializeField] private Vector3 offset;
 
     private void LateUpdate()
     {
         // check if player exists
         if (target != null)
         {
-            // compenstate for offset, just in case
-            // keep z the same since 2D
             Vector3 newPosition = target.position + offset;
-            newPosition.z = transform.position.z;
+            newPosition.z = transform.position.z; // Keep original Z-axis
 
-            // update
             transform.position = newPosition;
         }
     }

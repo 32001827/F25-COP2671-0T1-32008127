@@ -1,21 +1,22 @@
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
-using UnityEditor.Tilemaps;
 using UnityEngine;
 
 public class ToolBarController : MonoBehaviour
 {
-    public static SeedPacket activeSeedPacket { get; private set; }
+    /// <summary>
+    /// The currently selected SeedPacket from the dropdown.
+    /// </summary>
+    public static SeedPacket ActiveSeedPacket { get; private set; }
 
     [Header("Seed Selection")]
     [Tooltip("Add all your seed packets here")]
-    public List<SeedPacket> allSeedPackets;
+    [SerializeField] private List<SeedPacket> allSeedPackets;
 
     [Tooltip("Toolbar dropdown from UI")]
-    public TMP_Dropdown seedDropdown;
+    [SerializeField] private TMP_Dropdown seedDropdown;
 
     public static event Action OnHoeToolUsed;
     public static event Action OnWaterToolUsed;
@@ -27,11 +28,14 @@ public class ToolBarController : MonoBehaviour
         PopulateSeedDropdown();
     }
 
+    /// <summary>
+    /// Fills the seed dropdown UI with the names of available seeds.
+    /// </summary>
     void PopulateSeedDropdown()
     {
         if (seedDropdown == null || allSeedPackets == null) return;
 
-        List<string> seedNames = allSeedPackets.Select(seed => seed.cropName).ToList();
+        List<string> seedNames = allSeedPackets.Select(seed => seed.CropName).ToList();
 
         seedDropdown.ClearOptions();
         seedDropdown.AddOptions(seedNames);
@@ -41,9 +45,15 @@ public class ToolBarController : MonoBehaviour
         OnSeedSelectionChanged(0);
     }
 
+    /// <summary>
+    /// Called when the dropdown value changes. Sets the active seed.
+    /// </summary>
+    /// <param name="index">The new index of the dropdown.</param>
     public void OnSeedSelectionChanged(int index)
     {
-        activeSeedPacket = allSeedPackets[index];
+        if (index < 0 || index >= allSeedPackets.Count) return;
+
+        ActiveSeedPacket = allSeedPackets[index];
     }
 
     public void HoeButtonPressed()

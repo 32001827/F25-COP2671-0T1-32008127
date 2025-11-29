@@ -20,4 +20,5 @@ MonoBehaviour:
   - {fileID: -6164172520771353002, guid: 3c0fd9e79fa04564cb25b27e59aceaac, type: 3}
   - {fileID: -815452154426849831, guid: 3c0fd9e79fa04564cb25b27e59aceaac, type: 3}
   growthTimeInMinutes: 120
+  itemYield: {fileID: 11400000, guid: 43156a20d3fcae5468e0fdb7e6c9c2c0, type: 2}
   harvestablePrefab: {fileID: 0}

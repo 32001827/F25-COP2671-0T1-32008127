@@ -4,22 +4,22 @@ using UnityEngine.Tilemaps;
 public class FarmingController : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField]
-    private CropManager cropManager;
-
-    [SerializeField]
-    private Tilemap farmingTilemap;
+    [SerializeField] private CropManager cropManager;
+    [SerializeField] private Tilemap farmingTilemap;
 
     [Header("Animation")]
-    [SerializeField]
-    private Animator animator;
-    [SerializeField]
-    private PlayerController playerController;
+    [SerializeField] private Animator animator;
+    [SerializeField] private PlayerController playerController;
 
+    private InventoryManager inventoryManager;
     private CropBlock selectedBlock;
     private Vector2Int playerGridLocation;
-
     private bool isUsingTool = false;
+
+    private void Start()
+    {
+        inventoryManager = GetComponent<InventoryManager>();
+    }
 
     private void OnEnable()
     {
@@ -37,7 +37,6 @@ public class FarmingController : MonoBehaviour
         ToolBarController.OnHarvestToolUsed -= HandleHarvestTool;
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (isUsingTool) return;
@@ -48,10 +47,34 @@ public class FarmingController : MonoBehaviour
         selectedBlock = cropManager.GetBlockAt(playerGridLocation);
     }
 
+    /// <summary>
+    /// Called via Animation Event when a tool animation completes.
+    /// </summary>
     public void OnToolUseFinished()
     {
         isUsingTool = false;
-        playerController.canMove = true;
+        playerController.CanMove = true;
+    }
+
+    private void HandleHarvestTool()
+    {
+        if (isUsingTool || selectedBlock == null) return;
+
+        if (!selectedBlock.IsFullyGrown()) return;
+
+        isUsingTool = true;
+        playerController.CanMove = false;
+
+        animator.SetTrigger("UseHarvest");
+
+        ItemData harvestedItem = selectedBlock.HarvestPlants();
+
+        if (harvestedItem != null && inventoryManager != null)
+        {
+            inventoryManager.AddItem(harvestedItem, 1);
+        }
+
+        cropManager.RemoveFromPlantedCrops(selectedBlock);
     }
 
     private void HandleHoeTool()
@@ -59,11 +82,11 @@ public class FarmingController : MonoBehaviour
         if (isUsingTool || selectedBlock == null) return;
 
         isUsingTool = true;
-        playerController.canMove = false;
+        playerController.CanMove = false;
 
         animator.SetTrigger("UseHoe");
 
-        selectedBlock.TillSoil(); 
+        selectedBlock.TillSoil();
     }
 
     private void HandleWaterTool()
@@ -71,44 +94,30 @@ public class FarmingController : MonoBehaviour
         if (isUsingTool || selectedBlock == null) return;
 
         isUsingTool = true;
-        playerController.canMove = false;
+        playerController.CanMove = false;
 
         animator.SetTrigger("UseWater");
 
-        selectedBlock.WaterSoil(); 
+        selectedBlock.WaterSoil();
     }
 
     private void HandlePlantTool()
     {
         if (isUsingTool || selectedBlock == null) return;
 
-        SeedPacket seed = ToolBarController.activeSeedPacket; 
+        SeedPacket seed = ToolBarController.ActiveSeedPacket;
 
         if (seed == null) return;
 
         if (selectedBlock.CanPlant())
         {
             isUsingTool = true;
-            playerController.canMove = false;
+            playerController.CanMove = false;
 
             animator.SetTrigger("UsePlant");
 
-            selectedBlock.PlantSeed(seed); 
-            cropManager.AddToPlantedCrops(selectedBlock); 
+            selectedBlock.PlantSeed(seed);
+            cropManager.AddToPlantedCrops(selectedBlock);
         }
     }
-
-    private void HandleHarvestTool()
-    {
-        if (isUsingTool || selectedBlock == null) return;
-
-        isUsingTool = true;
-        playerController.canMove = false;
-
-        animator.SetTrigger("UseHarvest");
-
-        selectedBlock.HarvestPlants(); 
-        cropManager.RemoveFromPlantedCrops(selectedBlock); 
-    }
-
 }
