@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
+/// <summary>
+/// Controls a global 2D light to simulate day/night cycles using colors and intensity.
+/// </summary>
 [RequireComponent(typeof(Light2D))]
 public class DayNightLighting : MonoBehaviour
 {
@@ -31,13 +34,11 @@ public class DayNightLighting : MonoBehaviour
     /// <summary>
     /// Updates the global 2D light's intensity and color based on the game hour.
     /// </summary>
-    /// <param name="hour">The current hour (0-23).</param>
+    /// <param name="hour">The current game hour.</param>
     private void UpdateLighting(int hour)
     {
-        // Converts 0-23 hour format to 0.0-1.0 float format
         float normalizedTime = (float)hour / 24f;
 
-        // Evaluate curve/gradient at given time
         float newIntensity = intensityCurve.Evaluate(normalizedTime);
         Color newColor = colorGradient.Evaluate(normalizedTime);
 

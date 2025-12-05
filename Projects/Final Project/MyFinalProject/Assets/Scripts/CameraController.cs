@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/// <summary>
+/// Controls the camera to follow a specific target (usually the player) with an offset.
+/// </summary>
 public class CameraController : MonoBehaviour
 {
     [Tooltip("The transform the camera should follow (e.g., the player).")]
@@ -10,11 +13,10 @@ public class CameraController : MonoBehaviour
 
     private void LateUpdate()
     {
-        // check if player exists
         if (target != null)
         {
             Vector3 newPosition = target.position + offset;
-            newPosition.z = transform.position.z; // Keep original Z-axis
+            newPosition.z = transform.position.z;
 
             transform.position = newPosition;
         }

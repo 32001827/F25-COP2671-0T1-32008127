@@ -4,6 +4,9 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 
+/// <summary>
+/// Controls the UI toolbar buttons and handles tool selection/events.
+/// </summary>
 public class ToolBarController : MonoBehaviour
 {
     /// <summary>
@@ -28,9 +31,6 @@ public class ToolBarController : MonoBehaviour
         PopulateSeedDropdown();
     }
 
-    /// <summary>
-    /// Fills the seed dropdown UI with the names of available seeds.
-    /// </summary>
     void PopulateSeedDropdown()
     {
         if (seedDropdown == null || allSeedPackets == null) return;
@@ -45,15 +45,21 @@ public class ToolBarController : MonoBehaviour
         OnSeedSelectionChanged(0);
     }
 
-    /// <summary>
-    /// Called when the dropdown value changes. Sets the active seed.
-    /// </summary>
-    /// <param name="index">The new index of the dropdown.</param>
     public void OnSeedSelectionChanged(int index)
     {
         if (index < 0 || index >= allSeedPackets.Count) return;
 
         ActiveSeedPacket = allSeedPackets[index];
+    }
+
+    private void CycleToNextSeed()
+    {
+        if (seedDropdown == null || seedDropdown.options.Count == 0) return;
+
+        int currentIndex = seedDropdown.value;
+        int nextIndex = (currentIndex + 1) % seedDropdown.options.Count;
+
+        seedDropdown.value = nextIndex;
     }
 
     public void HoeButtonPressed()
@@ -93,6 +99,11 @@ public class ToolBarController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha4))
         {
             GatherButtonPressed();
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            CycleToNextSeed();
         }
     }
 }

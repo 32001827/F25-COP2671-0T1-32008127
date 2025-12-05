@@ -29,6 +29,11 @@ public class InventoryManager : MonoBehaviour
         {
             quantity += amount;
         }
+
+        public void SetQuantity(int amount)
+        {
+            quantity = amount;
+        }
     }
 
     [Header("Configuration")]
@@ -37,16 +42,19 @@ public class InventoryManager : MonoBehaviour
 
     [SerializeField] private List<InventorySlot> inventory = new List<InventorySlot>();
 
+    /// <summary>
+    /// Fires whenever the inventory content changes.
+    /// </summary>
     public static event Action OnInventoryChanged;
 
     private void Start()
     {
-        InitializeInventory();
+        if (inventory.Count == 0)
+        {
+            InitializeInventory();
+        }
     }
 
-    /// <summary>
-    /// Pre-fills the inventory with every item in the allGameItems list, set to 0 quantity.
-    /// </summary>
     private void InitializeInventory()
     {
         inventory.Clear();
@@ -65,7 +73,7 @@ public class InventoryManager : MonoBehaviour
     /// Adds an item to the existing static slot.
     /// </summary>
     /// <param name="item">The item data to add.</param>
-    /// <param name="amount">The amount to add.</param>
+    /// <param name="amount">The quantity to add.</param>
     public void AddItem(ItemData item, int amount = 1)
     {
         InventorySlot existingSlot = inventory.Find(slot => slot.ItemData == item);
@@ -75,17 +83,34 @@ public class InventoryManager : MonoBehaviour
             existingSlot.AddQuantity(amount);
             OnInventoryChanged?.Invoke();
         }
-        else
-        {
-            Debug.LogWarning($"Item '{item.ItemName}' was collected but is not in the 'All Game Items' list on InventoryManager!");
-        }
     }
 
     /// <summary>
-    /// Returns the current list of inventory slots.
+    /// Retrieves the current inventory list.
     /// </summary>
+    /// <returns>A list of inventory slots.</returns>
     public List<InventorySlot> GetInventory()
     {
         return inventory;
+    }
+
+    /// <summary>
+    /// Loads inventory state from save data.
+    /// </summary>
+    /// <param name="savedSlots">The list of saved slot data.</param>
+    public void LoadInventory(List<SaveData.InventorySlotData> savedSlots)
+    {
+        InitializeInventory();
+
+        foreach (var savedSlot in savedSlots)
+        {
+            InventorySlot realSlot = inventory.Find(s => s.ItemData.ItemName == savedSlot.ItemName);
+
+            if (realSlot != null)
+            {
+                realSlot.SetQuantity(savedSlot.Quantity);
+            }
+        }
+        OnInventoryChanged?.Invoke();
     }
 }

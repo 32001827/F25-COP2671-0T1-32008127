@@ -1,6 +1,9 @@
 using UnityEngine;
 using System;
 
+/// <summary>
+/// Triggers events when the game time reaches specific hours (Sunrise/Sunset).
+/// </summary>
 public class DayNightEvents : MonoBehaviour
 {
     [Header("Event Times (0-23)")]
@@ -29,10 +32,6 @@ public class DayNightEvents : MonoBehaviour
         TimeManager.OnGameHourPassed -= HandleGameHourPassed;
     }
 
-    /// <summary>
-    /// Listens to the TimeManager and fires sunrise/sunset events at the correct hour.
-    /// </summary>
-    /// <param name="hour">The current game hour.</param>
     private void HandleGameHourPassed(int hour)
     {
         if (hour == sunriseHour)

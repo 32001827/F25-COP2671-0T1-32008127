@@ -2,29 +2,44 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
+/// <summary>
+/// Manages the grid of crops, including soil states, growth updates, and visual tiles.
+/// </summary>
 public class CropManager : SingletonMonoBehaviour<CropManager>
 {
     [Header("References")]
-    [SerializeField]
-    private Tilemap farmingTilemap;
+    [SerializeField] private Tilemap farmingTilemap;
+    [SerializeField] private Tilemap soilTilemap;
 
-    [SerializeField]
-    private GameObject harvestReadyEffectPrefab;
+    [Header("Settings")]
+    [Tooltip("Time in minutes before tilled soil reverts to default.")]
+    [SerializeField] private float minutesToUntill = 720f;
+
+    [Header("Visuals")]
+    [SerializeField] private GameObject harvestReadyEffectPrefab;
+    [SerializeField] private TileBase tilledTile;
+    [SerializeField] private TileBase wateredTile;
+    [Tooltip("The tile to use when soil is NOT tilled. Leave empty if you want it to be clear/invisible.")]
+    [SerializeField] private TileBase defaultTile;
+
+    [Header("Database")]
+    [Tooltip("Drag ALL SeedPacket assets here so they can be loaded by name.")]
+    [SerializeField] private List<SeedPacket> allSeedPackets;
 
     /// <summary>
-    /// The particle effect prefab to spawn when a crop is ready to harvest.
+    /// Gets the particle effect prefab for harvest-ready crops.
     /// </summary>
     public GameObject HarvestReadyEffectPrefab => harvestReadyEffectPrefab;
 
-    [Header("Crop Data")]
     private CropBlock[,] cropGrid;
-    private List<CropBlock> plantedCrops = new List<CropBlock>();
+    private List<CropBlock> activeBlocks = new List<CropBlock>();
+    private BoundsInt gridBounds;
 
     private void Start()
     {
-        if (farmingTilemap != null)
+        if (soilTilemap != null && cropGrid == null)
         {
-            CreateGridUsingTilemap(farmingTilemap);
+            CreateGridUsingTilemap(soilTilemap);
         }
     }
 
@@ -40,123 +55,190 @@ public class CropManager : SingletonMonoBehaviour<CropManager>
         TimeManager.OnGameMinutePassed -= HandleGameMinutePassed;
     }
 
-    /// <summary>
-    /// Called by the TimeManager every game minute.
-    /// </summary>
-    /// <param name="minute">The current minute.</param>
     private void HandleGameMinutePassed(int minute)
     {
-        for (int i = plantedCrops.Count - 1; i >= 0; i--)
+        for (int i = activeBlocks.Count - 1; i >= 0; i--)
         {
-            plantedCrops[i].Grow(1);
+            bool keepActive = activeBlocks[i].GameUpdate(1, minutesToUntill);
+
+            if (!keepActive)
+            {
+                activeBlocks.RemoveAt(i);
+            }
         }
     }
 
+    private void HandleGameHourPassed(int hour) { }
+
     /// <summary>
-    /// Called by the TimeManager every game hour.
+    /// Updates the visual tile on the soil map based on tilled/watered state.
     /// </summary>
-    /// <param name="hour">The new hour.</param>
-    private void HandleGameHourPassed(int hour)
+    /// <param name="gridLocation">The grid coordinate to update.</param>
+    /// <param name="isTilled">Whether the soil is tilled.</param>
+    /// <param name="isWatered">Whether the soil is watered.</param>
+    public void UpdateSoilSprite(Vector2Int gridLocation, bool isTilled, bool isWatered)
     {
-        // Reserved for future hourly logic
+        if (soilTilemap == null) return;
+
+        TileBase tileToSet = defaultTile;
+
+        if (isWatered) tileToSet = wateredTile;
+        else if (isTilled) tileToSet = tilledTile;
+
+        soilTilemap.SetTile((Vector3Int)gridLocation, tileToSet);
     }
 
     /// <summary>
-    /// Initializes the grid of CropBlocks based on the tilemap's bounds.
+    /// Initializes the grid data structure based on the bounds of the provided tilemap.
     /// </summary>
-    /// <param name="tilemap">The farming tilemap.</param>
+    /// <param name="tilemap">The tilemap defining the grid bounds.</param>
     public void CreateGridUsingTilemap(Tilemap tilemap)
     {
         tilemap.CompressBounds();
-        BoundsInt bounds = tilemap.cellBounds;
+        gridBounds = tilemap.cellBounds;
 
-        cropGrid = new CropBlock[bounds.size.x, bounds.size.y];
+        cropGrid = new CropBlock[gridBounds.size.x, gridBounds.size.y];
 
-        for (int x = 0; x < bounds.size.x; x++)
+        for (int x = 0; x < gridBounds.size.x; x++)
         {
-            for (int y = 0; y < bounds.size.y; y++)
+            for (int y = 0; y < gridBounds.size.y; y++)
             {
-                Vector2Int location = new Vector2Int(bounds.xMin + x, bounds.yMin + y);
+                Vector2Int location = new Vector2Int(gridBounds.xMin + x, gridBounds.yMin + y);
                 CreateGridBlock(location);
             }
         }
     }
 
     /// <summary>
-    /// Creates a new CropBlock and adds it to the grid array.
+    /// Creates a new CropBlock at the specified location.
     /// </summary>
-    /// <param name="location">The cell location for the new block.</param>
+    /// <param name="location">The grid coordinate for the block.</param>
     public void CreateGridBlock(Vector2Int location)
     {
-        BoundsInt bounds = farmingTilemap.cellBounds;
-        int gridX = location.x - bounds.xMin;
-        int gridY = location.y - bounds.yMin;
+        int gridX = location.x - gridBounds.xMin;
+        int gridY = location.y - gridBounds.yMin;
 
-        if (gridX >= 0 && gridX < cropGrid.GetLength(0) &&
-            gridY >= 0 && gridY < cropGrid.GetLength(1))
+        if (gridX >= 0 && gridX < cropGrid.GetLength(0) && gridY >= 0 && gridY < cropGrid.GetLength(1))
         {
             CropBlock gridBlock = new CropBlock(location, farmingTilemap);
             cropGrid[gridX, gridY] = gridBlock;
         }
-        else
-        {
-            Debug.LogError($"CreateGridBlock: Location {location} is out of bounds.");
-        }
     }
 
     /// <summary>
-    /// Adds a CropBlock to the list of actively growing crops.
+    /// Registers a block to receive updates (growth or soil decay).
+    /// </summary>
+    /// <param name="cropBlock">The block to add.</param>
+    public void RegisterActiveBlock(CropBlock cropBlock)
+    {
+        if (!activeBlocks.Contains(cropBlock)) activeBlocks.Add(cropBlock);
+    }
+
+    /// <summary>
+    /// Adds a crop block to the active update list.
     /// </summary>
     /// <param name="cropBlock">The block to add.</param>
     public void AddToPlantedCrops(CropBlock cropBlock)
     {
-        if (!plantedCrops.Contains(cropBlock))
-        {
-            plantedCrops.Add(cropBlock);
-        }
+        RegisterActiveBlock(cropBlock);
     }
 
     /// <summary>
-    /// Removes a CropBlock from the active growth list and the grid lookup.
+    /// Removes a crop from the list of active crops.
     /// </summary>
     /// <param name="cropBlock">The block to remove.</param>
     public void RemoveFromPlantedCrops(CropBlock cropBlock)
     {
-        if (plantedCrops.Contains(cropBlock))
+        if (cropBlock.IsTilled) return;
+
+        if (activeBlocks.Contains(cropBlock)) activeBlocks.Remove(cropBlock);
+    }
+
+    /// <summary>
+    /// Retrieves the CropBlock at the specified grid location.
+    /// </summary>
+    /// <param name="location">The grid coordinate.</param>
+    /// <returns>The CropBlock object, or null if out of bounds.</returns>
+    public CropBlock GetBlockAt(Vector2Int location)
+    {
+        int gridX = location.x - gridBounds.xMin;
+        int gridY = location.y - gridBounds.yMin;
+
+        if (gridX >= 0 && gridX < cropGrid.GetLength(0) && gridY >= 0 && gridY < cropGrid.GetLength(1))
         {
-            plantedCrops.Remove(cropBlock);
+            return cropGrid[gridX, gridY];
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Restores crop data from a save file.
+    /// </summary>
+    /// <param name="loadedCrops">The list of saved crop data.</param>
+    public void LoadCrops(List<SaveData.CropData> loadedCrops)
+    {
+        farmingTilemap.ClearAllTiles();
+        activeBlocks.Clear();
+
+        CreateGridUsingTilemap(soilTilemap);
+
+        foreach (var data in loadedCrops)
+        {
+            CropBlock block = GetBlockAt(data.Location);
+            if (block != null)
+            {
+                if (data.IsTilled)
+                {
+                    block.TillSoil();
+                    block.SetTilledTimer(data.TilledTimer);
+                }
+
+                if (data.IsWatered) block.WaterSoil();
+
+                if (!string.IsNullOrEmpty(data.SeedName))
+                {
+                    SeedPacket seed = allSeedPackets.Find(s => s.CropName == data.SeedName);
+                    if (seed != null)
+                    {
+                        block.ForceLoadCrop(seed, data.GrowthStage, data.GrowthTimer);
+                    }
+                }
+
+                if (block.IsTilled || block.SeedPacket != null)
+                {
+                    RegisterActiveBlock(block);
+                }
+            }
         }
 
-        BoundsInt bounds = farmingTilemap.cellBounds;
-        int gridX = cropBlock.Location.x - bounds.xMin;
-        int gridY = cropBlock.Location.y - bounds.yMin;
-
-        if (gridX >= 0 && gridX < cropGrid.GetLength(0) &&
-            gridY >= 0 && gridY < cropGrid.GetLength(1))
+        if (cropGrid != null)
         {
-            cropGrid[gridX, gridY] = new CropBlock(cropBlock.Location, farmingTilemap);
+            foreach (var block in cropGrid)
+            {
+                if (block != null)
+                {
+                    UpdateSoilSprite(block.Location, block.IsTilled, block.IsWatered);
+                }
+            }
         }
     }
 
     /// <summary>
-    /// Gets the CropBlock data for a specific cell location.
+    /// Retrieves all active CropBlocks for saving.
     /// </summary>
-    /// <param name="location">The cell location to check.</param>
-    /// <returns>The CropBlock at that location, or null if out of bounds.</returns>
-    public CropBlock GetBlockAt(Vector2Int location)
+    /// <returns>A list of modified CropBlocks.</returns>
+    public List<CropBlock> GetAllCrops()
     {
-        BoundsInt bounds = farmingTilemap.cellBounds;
-        int gridX = location.x - bounds.xMin;
-        int gridY = location.y - bounds.yMin;
+        List<CropBlock> cropsToSave = new List<CropBlock>();
+        if (cropGrid == null) return cropsToSave;
 
-        if (gridX >= 0 && gridX < cropGrid.GetLength(0) &&
-            gridY >= 0 && gridY < cropGrid.GetLength(1))
+        foreach (var block in cropGrid)
         {
-            return cropGrid[gridX, gridY];
+            if (block != null && (block.IsTilled || block.SeedPacket != null))
+            {
+                cropsToSave.Add(block);
+            }
         }
-        else
-        {
-            return null;
-        }
+        return cropsToSave;
     }
 }

@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
+/// <summary>
+/// Handles player input for farming actions and triggers animations/logic.
+/// </summary>
 public class FarmingController : MonoBehaviour
 {
     [Header("References")]
@@ -81,6 +84,8 @@ public class FarmingController : MonoBehaviour
     {
         if (isUsingTool || selectedBlock == null) return;
 
+        if (selectedBlock.IsTilled) return;
+
         isUsingTool = true;
         playerController.CanMove = false;
 
@@ -92,6 +97,8 @@ public class FarmingController : MonoBehaviour
     private void HandleWaterTool()
     {
         if (isUsingTool || selectedBlock == null) return;
+
+        if (!selectedBlock.IsTilled || selectedBlock.IsWatered) return;
 
         isUsingTool = true;
         playerController.CanMove = false;

@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/// <summary>
+/// ScriptableObject definition for a plantable seed.
+/// </summary>
 [CreateAssetMenu(fileName = "New Seed Packet", menuName = "Farm/Seed Packet")]
 public class SeedPacket : ScriptableObject
 {

@@ -38,9 +38,6 @@ public class InventoryUI : MonoBehaviour
         InventoryManager.OnInventoryChanged -= RefreshUI;
     }
 
-    /// <summary>
-    /// Redraws the inventory slots.
-    /// </summary>
     private void RefreshUI()
     {
         foreach (Transform child in slotContainer)

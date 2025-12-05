@@ -1,73 +1,121 @@
 using UnityEngine;
 
+/// <summary>
+/// Handles grid-based player movement and input.
+/// </summary>
 public class PlayerController : MonoBehaviour
 {
-    [Header("Move Speed")]
+    [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private LayerMask obstacleLayer;
+
+    [Header("Map Boundaries")]
+    [SerializeField] private bool useMapBounds = true;
+    [SerializeField] private Vector2 minBounds;
+    [SerializeField] private Vector2 maxBounds;
 
     /// <summary>
     /// Public property to control whether the player can move.
     /// </summary>
     public bool CanMove { get; set; } = true;
 
-    private Rigidbody2D rb;
-    private Vector2 moveInput;
-    private Animator animator;
+    private bool isMoving = false;
+    private Vector2 input;
+    private Vector3 targetPosition;
     private Vector2 lastMoveInput;
+
+    private Animator animator;
     private SpriteRenderer spriteRenderer;
 
-    void Start()
+    private void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
 
-        rb.gravityScale = 0;
-        rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+        Rigidbody2D rb = GetComponent<Rigidbody2D>();
+        if (rb != null) rb.bodyType = RigidbodyType2D.Kinematic;
     }
 
-    void Update()
+    private void Update()
     {
-        if (!CanMove)
+        if (isMoving)
         {
-            moveInput = Vector2.zero;
+            MovePlayer();
         }
-        else
+        else if (CanMove)
         {
-            float moveX = Input.GetAxisRaw("Horizontal");
-            float moveY = Input.GetAxisRaw("Vertical");
+            input.x = Input.GetAxisRaw("Horizontal");
+            input.y = Input.GetAxisRaw("Vertical");
 
-            moveInput = new Vector2(moveX, moveY);
+            if (input.x != 0) input.y = 0;
 
-            if (moveInput.magnitude > 1)
+            if (input != Vector2.zero)
             {
-                moveInput.Normalize();
+                targetPosition = transform.position + new Vector3(input.x, input.y, 0);
+
+                if (IsWalkable(targetPosition))
+                {
+                    isMoving = true;
+                    lastMoveInput = input;
+
+                    if (input.x < 0) spriteRenderer.flipX = true;
+                    if (input.x > 0) spriteRenderer.flipX = false;
+                }
             }
         }
 
-        if (moveInput.x < -0.1f)
+        UpdateAnimator();
+    }
+
+    private void MovePlayer()
+    {
+        transform.position = Vector3.MoveTowards(transform.position, targetPosition, moveSpeed * Time.deltaTime);
+
+        if (Vector3.Distance(transform.position, targetPosition) < 0.001f)
         {
-            spriteRenderer.flipX = true;
+            transform.position = targetPosition;
+            isMoving = false;
         }
-        else if (moveInput.x > 0.1f)
+    }
+
+    private bool IsWalkable(Vector3 targetPos)
+    {
+        if (useMapBounds)
         {
-            spriteRenderer.flipX = false;
+            if (targetPos.x < minBounds.x || targetPos.x > maxBounds.x ||
+                targetPos.y < minBounds.y || targetPos.y > maxBounds.y)
+            {
+                return false;
+            }
         }
 
-        if (moveInput.magnitude > 0.1f)
+        if (Physics2D.OverlapCircle(targetPos, 0.2f, obstacleLayer) != null)
         {
-            lastMoveInput = moveInput;
+            return false;
         }
 
-        animator.SetFloat("moveX", moveInput.x);
-        animator.SetFloat("moveY", moveInput.y);
-        animator.SetFloat("speed", moveInput.magnitude);
+        return true;
+    }
+
+    private void UpdateAnimator()
+    {
+        float currentSpeed = isMoving ? 1f : 0f;
+
+        animator.SetFloat("moveX", input.x);
+        animator.SetFloat("moveY", input.y);
+        animator.SetFloat("speed", currentSpeed);
         animator.SetFloat("lastMoveX", lastMoveInput.x);
         animator.SetFloat("lastMoveY", lastMoveInput.y);
     }
 
-    private void FixedUpdate()
+    private void OnDrawGizmosSelected()
     {
-        rb.linearVelocity = moveInput * moveSpeed;
+        if (useMapBounds)
+        {
+            Gizmos.color = Color.green;
+            Vector3 center = new Vector3((minBounds.x + maxBounds.x) / 2, (minBounds.y + maxBounds.y) / 2, 0);
+            Vector3 size = new Vector3(maxBounds.x - minBounds.x, maxBounds.y - minBounds.y, 0);
+            Gizmos.DrawWireCube(center, size);
+        }
     }
 }

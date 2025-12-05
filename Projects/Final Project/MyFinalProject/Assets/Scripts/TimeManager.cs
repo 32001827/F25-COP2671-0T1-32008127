@@ -1,6 +1,9 @@
 using UnityEngine;
 using System;
 
+/// <summary>
+/// Manages the in-game clock, tracking days, hours, and minutes.
+/// </summary>
 public class TimeManager : MonoBehaviour
 {
     [Tooltip("How many real-world seconds equate to one in-game minute")]
@@ -67,5 +70,22 @@ public class TimeManager : MonoBehaviour
             lastHour = CurrentHour;
             OnGameHourPassed?.Invoke(CurrentHour);
         }
+    }
+
+    /// <summary>
+    /// Sets the time manually (useful for loading games).
+    /// </summary>
+    public void SetTime(int day, int hour, int minute)
+    {
+        float minutesInDay = (hour * 60) + minute;
+        currentGameTimeInMinutes = minutesInDay;
+
+        CurrentDay = day;
+        CurrentHour = hour;
+        CurrentMinute = minute;
+
+        OnGameMinutePassed?.Invoke(CurrentMinute);
+        OnGameHourPassed?.Invoke(CurrentHour);
+        OnGameDayPassed?.Invoke(CurrentDay);
     }
 }
